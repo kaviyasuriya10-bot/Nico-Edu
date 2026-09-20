@@ -1,0 +1,3 @@
+const API_URL=localStorage.getItem('nicoedu_api_url')||location.protocol+'//'+location.hostname+':8000/api';
+async function api(path,opts={}){const token=localStorage.getItem('nicoedu_token');const r=await fetch(API_URL+path,{headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})},...opts});const d=await r.json().catch(()=>({detail:'Unexpected server response'}));if(!r.ok)throw Error(d.detail||'Request failed');return d}
+function toast(message){const e=document.createElement('div');e.className='toast';e.textContent=message;document.body.append(e);setTimeout(()=>e.remove(),3000)}

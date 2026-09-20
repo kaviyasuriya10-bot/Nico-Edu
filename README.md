@@ -1,81 +1,68 @@
-## Overview
+# NicoEdu — AI Powered Student Study System
 
-This project presents the design and development of a solar-powered autonomous glider with AI-based monitoring capabilities. The system integrates renewable energy, embedded electronics, and flight control to enable efficient and long-endurance aerial operation.
+NicoEdu is a full-stack student study system: subjects, topics, notes, quizzes and attempts, goals, progress tracking, an admin area, and a configurable AI tutor. It is built from scratch with FastAPI, MySQL, HTML/CSS, and vanilla JavaScript.
 
-![Solar Glider](https://github.com/user-attachments/assets/b6b901fc-1503-4f5c-ac58-f5eaf1de84e6)
+## Features
 
-The glider uses solar panels to supplement battery power, extending flight duration while reducing dependence on ground charging. A flight controller manages stabilization and navigation, while onboard electronics monitor system performance in real time.
+- JWT login and registration with bcrypt password hashing and `student` / `admin` roles.
+- Per-user ownership checks for subjects, topics, notes, quizzes, results, goals, and AI conversations.
+- Subject/topic progress, activity, goals, and quiz scoring.
+- AI chat plus summary, notes, question, and quiz generation endpoints, with friendly unavailable-state handling.
+- Responsive blue/purple UI, dark mode, landing, student dashboard and admin dashboard.
 
----
+## Setup
 
-## Key Features
+Create the database and tables, then configure the backend:
 
-* Solar-assisted power system for extended endurance
-* Autonomous flight using Pixhawk and ArduPlane
-* Real-time telemetry and system monitoring
-* Lightweight fixed-wing glider design
-* Modular architecture for future AI integration
+```bash
+mysql -u root -p < backend/database/schema.sql
+cp backend/.env.example backend/.env
+python -m venv venv
+source venv/bin/activate
+pip install -r backend/requirements.txt
+cd backend
+python -m uvicorn main:app --reload
+```
 
----
+Set a strong unique `SECRET_KEY` and correct MySQL values in `backend/.env`. Serve the frontend separately:
 
-## System Components
+```bash
+python -m http.server 5500 --directory frontend
+```
 
-* **Flight Controller:** Pixhawk
-* **Power System:** LiPo battery + solar panels + CN3722 MPPT
-* **Sensors:** IMU, GPS, barometer, compass
-* **Communication:** Telemetry module
-* **Actuators:** Servo motors and brushless motor (ESC controlled)
+Open `http://localhost:5500`. The frontend infers the API URL as `http://localhost:8000/api`; it can be changed from Settings.
 
----
+To make an admin, register a user, then run:
 
-## How It Works
+```sql
+UPDATE nicoedu.users SET role='admin' WHERE username='your-admin-username';
+```
 
-Solar panels generate energy during flight and charge the battery through an MPPT controller. The flight controller processes sensor data to maintain stable flight and execute missions. Control signals are sent to servos and the motor to adjust the aircraft’s movement.
+## AI configuration
 
----
+The included adapter supports OpenAI. Keep all keys on the backend only:
 
-## Repository Structure
+```env
+AI_PROVIDER=openai
+AI_API_KEY=your-server-only-key
+AI_MODEL=gpt-4o-mini
+```
 
-* `firmware/` → Pixhawk configuration and companion control code
-* `hardware/` → Wiring diagrams and system design
-* `cad/` → 3D models of the glider
-* `docs/` → Documentation and design explanations
-* `bom.csv` → Bill of materials
+Without these values, the application remains functional and AI requests return a helpful configuration message. Add providers in `backend/services/ai_service.py`.
 
----
+## Architecture
 
-## Project Status
+`backend/api` contains protected FastAPI routes; `database/schema.sql` is the complete MySQL schema; `utils/security.py` handles bcrypt/JWT; `frontend` is a vanilla JS client. FastAPI Swagger documentation is available at `/docs`.
 
-This project is currently in the design and prototyping phase. Hardware integration and real-world testing are planned for future stages.
+## HTTPS deployment
 
----
+Place Uvicorn behind Caddy or Nginx, terminate TLS at the proxy, serve `frontend/` as static files, proxy `/api` privately, and set `CORS_ORIGINS` to the public HTTPS origin. Do not expose `.env`, database credentials, or AI keys.
 
-## Future Improvements
+## Validation and troubleshooting
 
-* AI-based flight optimization
-* Solar energy-aware navigation
-* Autonomous landing system
-* Advanced telemetry and data logging
-* Optional upgrades:
+```bash
+pytest -q
+python -m compileall backend
+```
 
-  * Caddx Ratel 2 Micro FPV Camera
-  * Thermal sensor (for environmental monitoring)
-  * External charger (e.g., IMAX B6)
-
----
-
-## Goal
-
-To develop a low-cost, efficient, and scalable solar-powered UAV platform for research, learning, and real-world applications.
-
-## NOTE:
-Some basic components like connectors and wiring are already available and not included in the cost.
-other components like GPS,gyro sensor,barometer,altitude sensor and some other
-
-## Badges Justification
-
-CAD: Airframe designed using CAD modeling for aerodynamic structure.
-
-Motors: Brushless motor and servos are used for propulsion and control surfaces.
-
-I2C: Sensors such as IMU and GPS communicate with the flight controller using I2C protocol.
+If MySQL cannot connect, check that the server is running and the `.env` credentials match. For CORS errors, add the exact frontend origin to `CORS_ORIGINS`. An unavailable AI message means AI environment variables have not yet been configured.

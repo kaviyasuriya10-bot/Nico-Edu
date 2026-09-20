@@ -1,0 +1,1 @@
+@media(max-width:750px){.nav-links a:not(.btn){display:none}.side{transform:translateX(-100%);transition:.2s;z-index:3}.side.open{transform:translateX(0)}.main{margin:0;width:100%;padding:20px}.main:before{content:'☰';font-size:24px;cursor:pointer}.table{font-size:12px}.hero{padding:70px 8%}.top{align-items:flex-start;gap:10px}.row{flex-wrap:wrap}}
