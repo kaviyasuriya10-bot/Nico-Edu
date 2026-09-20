@@ -16,7 +16,9 @@ def create(data:GoalIn,user=Depends(current_user)):
 @router.put('/{gid}')
 def update(gid:int,data:GoalIn,user=Depends(current_user)):
  with get_db() as db:
-  owned(db,'study_goals','goal_id',gid,user['user_id']);status='completed' if data.progress_percentage==100 else data.status
+  owned(db,'study_goals','goal_id',gid,user['user_id'])
+  if data.subject_id:owned(db,'subjects','subject_id',data.subject_id,user['user_id'])
+  status='completed' if data.progress_percentage==100 else data.status
   with db.cursor() as c:c.execute('UPDATE study_goals SET subject_id=%s,title=%s,description=%s,target_date=%s,progress_percentage=%s,status=%s WHERE goal_id=%s',(data.subject_id,data.title,data.description,data.target_date,data.progress_percentage,status,gid))
  return {'message':'Goal updated'}
 @router.delete('/{gid}')

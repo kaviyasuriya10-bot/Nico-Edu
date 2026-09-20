@@ -12,6 +12,10 @@ def create(data:QuizIn,user=Depends(current_user)):
  if not data.questions:raise HTTPException(422,'Add at least one question')
  with get_db() as db:
   if data.subject_id:owned(db,'subjects','subject_id',data.subject_id,user['user_id'])
+  if data.topic_id:
+   with db.cursor() as c:
+    c.execute('SELECT t.topic_id FROM topics t JOIN subjects s ON s.subject_id=t.subject_id WHERE t.topic_id=%s AND s.user_id=%s',(data.topic_id,user['user_id']))
+    if not c.fetchone(): raise HTTPException(404,'Topic not found')
   with db.cursor() as c:
    c.execute('INSERT INTO quizzes(user_id,subject_id,topic_id,title,difficulty,total_questions) VALUES(%s,%s,%s,%s,%s,%s)',(user['user_id'],data.subject_id,data.topic_id,data.title,data.difficulty,len(data.questions)));qid=c.lastrowid
    for q in data.questions:c.execute('INSERT INTO quiz_questions(quiz_id,question_text,question_type,option_a,option_b,option_c,option_d,correct_answer,explanation) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)',(qid,q.question_text,q.question_type,q.option_a,q.option_b,q.option_c,q.option_d,q.correct_answer,q.explanation))
@@ -32,7 +36,7 @@ def attempt(qid:int,data:AttemptIn,user=Depends(current_user)):
    score=sum(1 for q in qs if str(data.answers.get(q['question_id'], '')).strip().lower()==q['correct_answer'].strip().lower()); pct=round(score*100/len(qs),2) if qs else 0
    c.execute('INSERT INTO quiz_attempts(quiz_id,user_id,score,percentage,completed_at) VALUES(%s,%s,%s,%s,NOW())',(qid,user['user_id'],score,pct));aid=c.lastrowid
    for q in qs:
-    ans=data.answers.get(q['question_id'],'');c.execute('INSERT INTO quiz_answers(attempt_id,question_id,selected_answer,is_correct) VALUES(%s,%s,%s,%s)',(aid,q['question_id'],ans,str(ans).lower()==q['correct_answer'].lower()))
+    ans=str(data.answers.get(q['question_id'],'')).strip(); correct=str(q['correct_answer']).strip();c.execute('INSERT INTO quiz_answers(attempt_id,question_id,selected_answer,is_correct) VALUES(%s,%s,%s,%s)',(aid,q['question_id'],ans,ans.lower()==correct.lower()))
   activity(db,user['user_id'],'quiz_completed',f'Completed quiz with {pct}%')
  return {'attempt_id':aid,'score':score,'percentage':pct,'total_questions':len(qs)}
 @router.get('/{qid}/results')

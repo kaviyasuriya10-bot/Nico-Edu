@@ -15,6 +15,10 @@ def list_notes(search:str='',subject_id:int|None=None,user=Depends(current_user)
 def create(data:NoteIn,user=Depends(current_user)):
  with get_db() as db:
   if data.subject_id: owned(db,'subjects','subject_id',data.subject_id,user['user_id'])
+  if data.topic_id:
+   with db.cursor() as c:
+    c.execute('SELECT t.topic_id FROM topics t JOIN subjects s ON s.subject_id=t.subject_id WHERE t.topic_id=%s AND s.user_id=%s',(data.topic_id,user['user_id']))
+    if not c.fetchone(): raise HTTPException(404,'Topic not found')
   with db.cursor() as c:c.execute('INSERT INTO notes(user_id,subject_id,topic_id,title,content,tags) VALUES(%s,%s,%s,%s,%s,%s)',(user['user_id'],data.subject_id,data.topic_id,data.title,data.content,data.tags));nid=c.lastrowid
   activity(db,user['user_id'],'note_created',f'Created note: {data.title}')
  return {'note_id':nid,'message':'Note created'}
@@ -26,6 +30,10 @@ def update(nid:int,data:NoteIn,user=Depends(current_user)):
  with get_db() as db:
   owned(db,'notes','note_id',nid,user['user_id'])
   if data.subject_id:owned(db,'subjects','subject_id',data.subject_id,user['user_id'])
+  if data.topic_id:
+   with db.cursor() as c:
+    c.execute('SELECT t.topic_id FROM topics t JOIN subjects s ON s.subject_id=t.subject_id WHERE t.topic_id=%s AND s.user_id=%s',(data.topic_id,user['user_id']))
+    if not c.fetchone(): raise HTTPException(404,'Topic not found')
   with db.cursor() as c:c.execute('UPDATE notes SET subject_id=%s,topic_id=%s,title=%s,content=%s,tags=%s WHERE note_id=%s',(data.subject_id,data.topic_id,data.title,data.content,data.tags,nid))
  return {'message':'Note updated'}
 @router.delete('/{nid}')

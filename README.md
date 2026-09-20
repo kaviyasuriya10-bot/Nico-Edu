@@ -1,68 +1,147 @@
-# NicoEdu — AI Powered Student Study System
+# NicoEdu — AI-Powered Student Study System
 
-NicoEdu is a full-stack student study system: subjects, topics, notes, quizzes and attempts, goals, progress tracking, an admin area, and a configurable AI tutor. It is built from scratch with FastAPI, MySQL, HTML/CSS, and vanilla JavaScript.
+NicoEdu is a full-stack student study system built with **FastAPI, MySQL, HTML, CSS and vanilla JavaScript**.
 
-## Features
+## Included features
 
-- JWT login and registration with bcrypt password hashing and `student` / `admin` roles.
-- Per-user ownership checks for subjects, topics, notes, quizzes, results, goals, and AI conversations.
-- Subject/topic progress, activity, goals, and quiz scoring.
-- AI chat plus summary, notes, question, and quiz generation endpoints, with friendly unavailable-state handling.
-- Responsive blue/purple UI, dark mode, landing, student dashboard and admin dashboard.
+- Student registration and login
+- JWT authentication with bcrypt password hashing
+- Subjects and topics with progress
+- Personal notes
+- Quiz creation and attempts
+- Study goals
+- Progress dashboard and activity history
+- Admin dashboard
+- Optional AI tutor
+- Responsive frontend
 
-## Setup
+## Important: do not share secrets
 
-Create the database and tables, then configure the backend:
+The original uploaded project contained a `backend/.env` file with a database password and an AI API key. Those secrets have **not** been included in this cleaned ZIP.
+
+If that API key is real, rotate/revoke it in the provider dashboard before using the project again.
+
+## Requirements
+
+- Python 3.11+ recommended
+- MySQL 5.5+ (MySQL 8.0+ recommended)
+- A modern browser
+
+## 1. Create the database
+
+Open MySQL and run:
+
+```sql
+SOURCE backend/database/schema.sql;
+```
+
+Or from a terminal:
 
 ```bash
 mysql -u root -p < backend/database/schema.sql
-cp backend/.env.example backend/.env
-python -m venv venv
-source venv/bin/activate
-pip install -r backend/requirements.txt
+```
+
+## 2. Configure the backend
+
+Copy:
+
+```text
+backend/.env.example
+```
+
+to:
+
+```text
+backend/.env
+```
+
+Then edit the values, especially:
+
+```env
+DATABASE_PASSWORD=YOUR_MYSQL_PASSWORD
+SECRET_KEY=CHANGE_THIS_TO_A_LONG_RANDOM_SECRET
+```
+
+AI is optional. Leave `AI_PROVIDER`, `AI_API_KEY`, and `AI_MODEL` blank if you do not want AI features.
+
+## 3. Install Python packages
+
+Windows:
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r backend\requirements.txt
+```
+
+Then start the API:
+
+```bat
 cd backend
 python -m uvicorn main:app --reload
 ```
 
-Set a strong unique `SECRET_KEY` and correct MySQL values in `backend/.env`. Serve the frontend separately:
+API:
+`http://127.0.0.1:8000`
 
-```bash
+Swagger docs:
+`http://127.0.0.1:8000/docs`
+
+## 4. Start the frontend
+
+Open a second terminal in the project folder:
+
+```bat
 python -m http.server 5500 --directory frontend
 ```
 
-Open `http://localhost:5500`. The frontend infers the API URL as `http://localhost:8000/api`; it can be changed from Settings.
+Open:
 
-To make an admin, register a user, then run:
+`http://127.0.0.1:5500`
+
+You can also double-click `START_BACKEND.bat` and `START_FRONTEND.bat`.
+
+## 5. Create an admin
+
+Register a normal account first, then run in MySQL:
 
 ```sql
-UPDATE nicoedu.users SET role='admin' WHERE username='your-admin-username';
+UPDATE nicoedu.users
+SET role='admin'
+WHERE username='your-admin-username';
 ```
 
-## AI configuration
+## Project structure
 
-The included adapter supports OpenAI. Keep all keys on the backend only:
-
-```env
-AI_PROVIDER=openai
-AI_API_KEY=your-server-only-key
-AI_MODEL=gpt-4o-mini
+```text
+NicoEdu/
+├── backend/
+│   ├── api/
+│   ├── database/
+│   ├── models/
+│   ├── services/
+│   ├── utils/
+│   ├── .env.example
+│   ├── config.py
+│   ├── main.py
+│   └── requirements.txt
+├── frontend/
+│   ├── *.html
+│   ├── css/
+│   └── js/
+├── tests/
+├── START_BACKEND.bat
+├── START_FRONTEND.bat
+└── README.md
 ```
 
-Without these values, the application remains functional and AI requests return a helpful configuration message. Add providers in `backend/services/ai_service.py`.
+## Validation
 
-## Architecture
-
-`backend/api` contains protected FastAPI routes; `database/schema.sql` is the complete MySQL schema; `utils/security.py` handles bcrypt/JWT; `frontend` is a vanilla JS client. FastAPI Swagger documentation is available at `/docs`.
-
-## HTTPS deployment
-
-Place Uvicorn behind Caddy or Nginx, terminate TLS at the proxy, serve `frontend/` as static files, proxy `/api` privately, and set `CORS_ORIGINS` to the public HTTPS origin. Do not expose `.env`, database credentials, or AI keys.
-
-## Validation and troubleshooting
+From the project root:
 
 ```bash
-pytest -q
 python -m compileall backend
+pytest -q
 ```
 
-If MySQL cannot connect, check that the server is running and the `.env` credentials match. For CORS errors, add the exact frontend origin to `CORS_ORIGINS`. An unavailable AI message means AI environment variables have not yet been configured.
+The project ZIP intentionally does **not** contain a Python virtual environment, cache files, API keys, or database passwords. Install dependencies locally with `pip install -r backend/requirements.txt`.

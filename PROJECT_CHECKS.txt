@@ -1,0 +1,25 @@
+NicoEdu cleanup and correction summary
+======================================
+
+Cleaned:
+- Removed bundled Python virtual environments (.venv / venv).
+- Removed cache and compiled Python artifacts.
+- Removed backend/.env so database passwords and API keys are not shipped.
+- Replaced .env.example with safe placeholders.
+- Added Windows START_BACKEND.bat and START_FRONTEND.bat.
+- Updated README with Windows setup instructions.
+
+Code corrections:
+- Added ownership validation for note topic_id references.
+- Added ownership validation for quiz topic_id references.
+- Added subject ownership validation when updating goals.
+- Added validation for quiz difficulty and question type.
+- Added validation for goal status.
+- Normalized quiz answer comparison before storing/checking.
+- Removed the InnoDB FULLTEXT requirement from the SQL schema for broader MySQL compatibility.
+- Adjusted updated_at timestamp definitions for older MySQL compatibility.
+
+Validation:
+- Python backend compile check: PASSED.
+- Local project-import static check: PASSED.
+- Full pytest execution requires the packages in backend/requirements.txt to be installed.
